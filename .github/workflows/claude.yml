@@ -1,0 +1,67 @@
+name: Claude Code
+
+# Configuration via GitHub Actions Variables (Settings > Secrets and variables > Actions > Variables):
+# - CLAUDE_AUTHORIZED_ROLES: JSON array of roles allowed to trigger (default: ["OWNER", "MEMBER", "COLLABORATOR"])
+# - CLAUDE_MENTION_TRIGGER: Text to trigger workflow (default: @claude)
+# - CLAUDE_CONCURRENCY_CANCEL: Cancel in-progress runs (default: false)
+# - CLAUDE_ALLOWED_TOOLS: Restrict tool access (default: unrestricted)
+# - CLAUDE_CUSTOM_PROMPT: Optional custom prompt to override default behavior
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    concurrency:
+      group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: ${{ vars.CLAUDE_CONCURRENCY_CANCEL == 'true' }}
+    if: |
+      (
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, vars.CLAUDE_MENTION_TRIGGER || '@claude') &&
+         contains(fromJSON(vars.CLAUDE_AUTHORIZED_ROLES || '["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, vars.CLAUDE_MENTION_TRIGGER || '@claude') &&
+         contains(fromJSON(vars.CLAUDE_AUTHORIZED_ROLES || '["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, vars.CLAUDE_MENTION_TRIGGER || '@claude') &&
+         contains(fromJSON(vars.CLAUDE_AUTHORIZED_ROLES || '["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association)) ||
+        (github.event_name == 'issues' && (contains(github.event.issue.body, vars.CLAUDE_MENTION_TRIGGER || '@claude') || contains(github.event.issue.title, vars.CLAUDE_MENTION_TRIGGER || '@claude')) &&
+         contains(fromJSON(vars.CLAUDE_AUTHORIZED_ROLES || '["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association))
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+      actions: read # Required for Claude to read CI results on PRs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Allow Claude to read CI results on PRs
+          additional_permissions: |
+            actions: read
+
+          # Custom prompt (configurable via CLAUDE_CUSTOM_PROMPT variable)
+          # If not set, Claude will perform instructions from the comment that tagged it
+          prompt: ${{ vars.CLAUDE_CUSTOM_PROMPT || '' }}
+
+          # Tool restrictions (configurable via CLAUDE_ALLOWED_TOOLS variable)
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://code.claude.com/docs/en/cli-reference for available options
+          # Example: '--allowed-tools "Bash(gh pr:*)"'
+          claude_args: ${{ vars.CLAUDE_ALLOWED_TOOLS || '' }}
