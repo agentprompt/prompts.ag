@@ -16,10 +16,17 @@ export default function Section({
   center = false,
   maxWidthClass = "max-w-4xl",
 }: SectionProps) {
+  const headingId = id ? `${id}-heading` : undefined;
+
   return (
-    <section id={id} className={`${className} px-6 py-16`}>
+    <section
+      id={id}
+      className={`${className} px-6 py-16`}
+      aria-labelledby={headingId}
+    >
       <div className={`${maxWidthClass} mx-auto flex flex-col gap-6`}>
         <h2
+          id={headingId}
           className={`text-2xl font-semibold tracking-tight ${center ? "mx-auto text-center" : ""}`}
         >
           {title}

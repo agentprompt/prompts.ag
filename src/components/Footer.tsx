@@ -9,6 +9,7 @@ export default function Footer() {
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
+            aria-label="MIT License (opens in new tab)"
           >
             MIT License
           </a>
@@ -21,6 +22,7 @@ export default function Footer() {
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
+            aria-label="AGENTS.md website (opens in new tab)"
           >
             AGENTS.md
           </a>

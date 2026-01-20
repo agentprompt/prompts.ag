@@ -1,14 +1,28 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const description = "A living reference for structured prompt formats, tracking what frontier AI agents want.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://prompts.ag"),
   title: "Agent prompt — A living reference for structured prompt formats",
-  description:
-    "Synthesizing evolving guidance from frontier labs so humans can write prompts with confidence.",
+  description,
+  keywords: [
+    "agent prompts",
+    "AI prompts",
+    "XML tags",
+    "prompt engineering",
+    "Claude",
+    "GPT",
+    "Gemini",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: "Agent prompt",
-    description:
-      "A living reference for structured prompt formats, tracking what frontier AI agents want.",
+    description,
     url: "https://prompts.ag",
     siteName: "Agent prompt",
     type: "website",
@@ -16,8 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Agent prompt",
-    description:
-      "A living reference for structured prompt formats, tracking what frontier AI agents want.",
+    description,
   },
 };
 
@@ -27,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr">
       <body className="antialiased">{children}</body>
     </html>
   );

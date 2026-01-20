@@ -1,9 +1,14 @@
-type CodeExampleProps = {
+export type CodeExampleProps = {
   code: string;
   filename?: string;
+  language?: string;
 };
 
-export default function CodeExample({ code, filename }: CodeExampleProps) {
+export default function CodeExample({
+  code,
+  filename,
+  language = "ag",
+}: CodeExampleProps) {
   return (
     <div className="rounded-lg border border-current/20 overflow-hidden">
       {filename && (
@@ -11,8 +16,8 @@ export default function CodeExample({ code, filename }: CodeExampleProps) {
           {filename}
         </div>
       )}
-      <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
-        <code>{code}</code>
+      <pre className="p-4 overflow-x-auto text-sm leading-relaxed" tabIndex={0}>
+        <code className={`language-${language}`}>{code}</code>
       </pre>
     </div>
   );
