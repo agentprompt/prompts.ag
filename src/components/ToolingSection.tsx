@@ -28,10 +28,10 @@ export default function ToolingSection() {
       <div className="space-y-4 mt-6">
         {toolingItems.map((item, index) => (
           <div key={item.title} className="flex gap-4 items-start">
-            <span className="text-sm opacity-50 font-mono w-6">{index + 1}.</span>
+            <span className="text-sm text-[var(--text-muted)] font-mono w-6">{index + 1}.</span>
             <div>
               <h3 className="font-semibold">{item.title}</h3>
-              <p className="opacity-80">{item.description}</p>
+              <p className="text-[var(--text-secondary)]">{item.description}</p>
             </div>
           </div>
         ))}

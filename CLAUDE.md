@@ -14,6 +14,21 @@ A living reference for structured prompt formats, tracking what frontier AI agen
 
 1. **Never use Claude as commit author.** All commits must use the repository owner's git identity (`Simon Heimlicher <simon.github@heimlicher.com>`), not Claude or any AI assistant. This applies to all commits, including initial commits, amendments, and rebases.
 
+## Development Workflow
+
+Follow this collaboration workflow for all changes:
+
+1. **Feature branch**: Create a new branch for each change (related changes can be grouped)
+2. **Local development**: Develop on the feature branch, user validates via `pnpm dev`
+3. **Push and PR**: On user approval, push to GitHub and open a PR
+   - Assign `simonheimlicher` as reviewer
+   - Add comment `/gemini review` to trigger Gemini review
+   - `@claude` review triggers automatically via GitHub Action
+4. **Address reviews**: Wait for AI reviews, then address suggested changes
+   - Use separate commits for successful changes
+   - Squash multiple failed attempts into clean commits
+5. **Final review**: User reviews and determines if ready to merge to main
+
 ## Core Positioning
 
 Modern prompts combine XML-like tags with Markdown content. The challenge isn't the format—it's the uncertainty. Best practices evolve as Anthropic, OpenAI, and Google DeepMind update their guidance.

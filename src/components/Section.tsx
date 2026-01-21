@@ -21,17 +21,17 @@ export default function Section({
   return (
     <section
       id={id}
-      className={`${className} px-6 py-16`}
+      className={`${className} px-6 py-10`}
       aria-labelledby={headingId}
     >
-      <div className={`${maxWidthClass} mx-auto flex flex-col gap-6`}>
+      <div className={`${maxWidthClass} mx-auto flex flex-col gap-4`}>
         <h2
           id={headingId}
           className={`text-2xl font-semibold tracking-tight ${center ? "mx-auto text-center" : ""}`}
         >
           {title}
         </h2>
-        <div className="space-y-4 leading-relaxed opacity-90">{children}</div>
+        <div className="space-y-4 leading-relaxed">{children}</div>
       </div>
     </section>
   );

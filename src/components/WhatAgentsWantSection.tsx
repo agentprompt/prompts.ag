@@ -81,13 +81,13 @@ function renderContent(content: ContentBlock[]): React.ReactNode {
 
 export default function WhatAgentsWantSection() {
   return (
-    <Section id="what-agents-want" title="What agents want">
+    <Section id="markdown-in-xml" title="Markdown in XML tags">
       <p>
-        Despite surface differences in documentation, frontier models converge on the same core preferences. Here&apos;s
-        the synthesis:
+        Frontier models converge on the same format: Markdown content wrapped in XML-like tags. Here&apos;s what they
+        want:
       </p>
 
-      <div className="space-y-6 mt-6">
+      <div className="space-y-5 mt-4">
         {guidelines.map((item) => (
           <div key={item.title}>
             <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
@@ -96,7 +96,7 @@ export default function WhatAgentsWantSection() {
         ))}
       </div>
 
-      <p className="mt-8 text-sm opacity-70">
+      <p className="mt-8 text-sm text-[var(--text-muted)]">
         Sources:{" "}
         <a
           href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags"
@@ -108,9 +108,9 @@ export default function WhatAgentsWantSection() {
           Anthropic
         </a>
         {" · "}
-        <span className="opacity-50">OpenAI (coming soon)</span>
+        OpenAI (coming soon)
         {" · "}
-        <span className="opacity-50">Google DeepMind (coming soon)</span>
+        Google DeepMind (coming soon)
       </p>
     </Section>
   );
