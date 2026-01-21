@@ -10,6 +10,10 @@ A living reference for structured prompt formats, tracking what frontier AI agen
 - **Repository**: https://github.com/agentprompt/prompts.ag
 - **File extension**: `.ag.md` (transitional), `.ag` (future)
 
+## IMPORTANT RULES
+
+1. **Never use Claude as commit author.** All commits must use the repository owner's git identity (`Simon Heimlicher <simon.github@heimlicher.com>`), not Claude or any AI assistant. This applies to all commits, including initial commits, amendments, and rebases.
+
 ## Core Positioning
 
 Modern prompts combine XML-like tags with Markdown content. The challenge isn't the format—it's the uncertainty. Best practices evolve as Anthropic, OpenAI, and Google DeepMind update their guidance.
