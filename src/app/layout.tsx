@@ -1,38 +1,39 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const description = "A living reference for structured prompt formats, tracking what frontier AI agents want.";
-
-export const metadata: Metadata = {
-  metadataBase: new URL("https://prompts.ag"),
-  title: "Agent prompt — A living reference for structured prompt formats",
-  description,
-  keywords: [
-    "agent prompts",
-    "AI prompts",
-    "XML tags",
-    "prompt engineering",
-    "Claude",
-    "GPT",
-    "Gemini",
-  ],
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
-    title: "Agent prompt",
-    description,
-    url: "https://prompts.ag",
-    siteName: "Agent prompt",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Agent prompt",
-    description,
-  },
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
+
+export function generateMetadata(): Metadata {
+  const siteUrl = "https://prompts.ag";
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: "What agents want — Structured prompt formats for AI",
+    description:
+      "A living reference for structured prompt formats. Learn how Anthropic, OpenAI, and Google recommend structuring prompts with XML-like tags and Markdown content.",
+    keywords: ["agent prompts", "AI prompts", "prompt engineering"],
+    openGraph: {
+      title: "What agents want — Structured prompt formats for AI",
+      description:
+        "A living reference for structured prompt formats. Learn how Anthropic, OpenAI, and Google recommend structuring prompts with XML-like tags and Markdown content.",
+      url: "./",
+      siteName: "prompts.ag",
+      locale: "en_US",
+      type: "website",
+    },
+    twitter: {
+      title: "What agents want — Structured prompt formats for AI",
+      card: "summary_large_image",
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export default function RootLayout({
   children,
