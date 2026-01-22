@@ -6,7 +6,7 @@ A living reference for structured prompt formats, tracking what frontier AI agen
 
 ## What is this?
 
-Modern prompts combine XML-like tags with Markdown content. The challenge isn't the format—it's the uncertainty. Best practices evolve as Anthropic, OpenAI, and Google DeepMind update their guidance.
+Modern prompts combine XML-like tags with Markdown content. The challenge isn't the format—it's the uncertainty. Best practices evolve as Anthropic, OpenAI, and Google update their guidance.
 
 **Agent prompt** synthesizes evolving guidance from frontier labs so humans can write prompts with confidence.
 
