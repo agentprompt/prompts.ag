@@ -10,6 +10,30 @@ type GuidelineItem = {
   content: ContentBlock[];
 };
 
+type Source = {
+  name: string;
+  href: string;
+  ariaLabel: string;
+};
+
+const sources: Source[] = [
+  {
+    name: "Anthropic",
+    href: "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags",
+    ariaLabel: "Anthropic documentation (opens in new tab)",
+  },
+  {
+    name: "OpenAI",
+    href: "https://cookbook.openai.com/examples/gpt4-1_prompting_guide",
+    ariaLabel: "OpenAI GPT-4.1 Prompting Guide (opens in new tab)",
+  },
+  {
+    name: "Google",
+    href: "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/structure-prompts",
+    ariaLabel: "Google Vertex AI documentation (opens in new tab)",
+  },
+];
+
 const guidelines: GuidelineItem[] = [
   {
     title: "Use XML-like tags for structure",
@@ -108,36 +132,20 @@ export default function WhatAgentsWantSection() {
       </div>
 
       <p className="mt-8 text-sm text-[var(--text-muted)]">
-        Sources:{" "}
-        <a
-          href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-          aria-label="Anthropic documentation (opens in new tab)"
-        >
-          Anthropic
-        </a>
-        {" · "}
-        <a
-          href="https://cookbook.openai.com/examples/gpt4-1_prompting_guide"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-          aria-label="OpenAI GPT-4.1 Prompting Guide (opens in new tab)"
-        >
-          OpenAI
-        </a>
-        {" · "}
-        <a
-          href="https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/structure-prompts"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-          aria-label="Google Vertex AI documentation (opens in new tab)"
-        >
-          Google
-        </a>
+        Sources: {sources.map((source, index) => (
+          <React.Fragment key={source.name}>
+            <a
+              href={source.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              aria-label={source.ariaLabel}
+            >
+              {source.name}
+            </a>
+            {index < sources.length - 1 && " · "}
+          </React.Fragment>
+        ))}
       </p>
     </Section>
   );
