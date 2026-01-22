@@ -1,3 +1,4 @@
+import ApproachSection from "@/components/ApproachSection";
 import Footer from "@/components/Footer";
 import FormatSection from "@/components/FormatSection";
 import Hero from "@/components/Hero";
@@ -10,6 +11,7 @@ export default function Home() {
       <Hero />
       <WhatAgentsWantSection />
       <FormatSection />
+      <ApproachSection />
       <ToolingSection />
       <Footer />
     </main>

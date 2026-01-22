@@ -10,6 +10,30 @@ type GuidelineItem = {
   content: ContentBlock[];
 };
 
+type Source = {
+  name: string;
+  href: string;
+  ariaLabel: string;
+};
+
+const sources: Source[] = [
+  {
+    name: "Anthropic",
+    href: "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags",
+    ariaLabel: "Anthropic documentation (opens in new tab)",
+  },
+  {
+    name: "OpenAI",
+    href: "https://cookbook.openai.com/examples/gpt4-1_prompting_guide",
+    ariaLabel: "OpenAI GPT-4.1 Prompting Guide (opens in new tab)",
+  },
+  {
+    name: "Google",
+    href: "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/structure-prompts",
+    ariaLabel: "Google Vertex AI documentation (opens in new tab)",
+  },
+];
+
 const guidelines: GuidelineItem[] = [
   {
     title: "Use XML-like tags for structure",
@@ -59,13 +83,24 @@ const guidelines: GuidelineItem[] = [
     ],
   },
   {
-    title: "No attributes on tags",
+    title: "Attributes: labs differ",
     content: [
-      { type: "text", value: "Unlike HTML or XML, prompt tags don't use attributes. Write " },
-      { type: "code", value: "<example>" },
-      { type: "text", value: ", not " },
-      { type: "code", value: "<example type=\"good\">" },
-      { type: "text", value: ". If you need metadata, include it as content or use nested tags." },
+      {
+        type: "text",
+        value: "Anthropic recommends no attributes—use nested tags for metadata. OpenAI supports attributes like ",
+      },
+      { type: "code", value: "<doc id=\"1\" title=\"...\">" },
+      { type: "text", value: ". For portability across models, avoid attributes or test both approaches." },
+    ],
+  },
+  {
+    title: "Long context: repeat instructions",
+    content: [
+      {
+        type: "text",
+        value:
+          "For prompts with extensive context, place instructions at both the beginning and end. This helps models maintain focus on your requirements throughout processing.",
+      },
     ],
   },
 ];
@@ -97,20 +132,20 @@ export default function WhatAgentsWantSection() {
       </div>
 
       <p className="mt-8 text-sm text-[var(--text-muted)]">
-        Sources:{" "}
-        <a
-          href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-          aria-label="Anthropic documentation (opens in new tab)"
-        >
-          Anthropic
-        </a>
-        {" · "}
-        OpenAI (coming soon)
-        {" · "}
-        Google DeepMind (coming soon)
+        Sources: {sources.map((source, index) => (
+          <React.Fragment key={source.name}>
+            <a
+              href={source.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              aria-label={source.ariaLabel}
+            >
+              {source.name}
+            </a>
+            {index < sources.length - 1 && " · "}
+          </React.Fragment>
+        ))}
       </p>
     </Section>
   );
