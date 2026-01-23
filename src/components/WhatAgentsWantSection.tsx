@@ -24,8 +24,8 @@ const sources: Source[] = [
   },
   {
     name: "OpenAI",
-    href: "https://cookbook.openai.com/examples/gpt4-1_prompting_guide",
-    ariaLabel: "OpenAI GPT-4.1 Prompting Guide (opens in new tab)",
+    href: "https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-2_prompting_guide/",
+    ariaLabel: "OpenAI GPT-5.2 Prompting Guide (opens in new tab)",
   },
   {
     name: "Google",
