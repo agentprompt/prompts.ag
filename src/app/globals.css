@@ -4,52 +4,101 @@
   --font-sans:
     ui-sans-serif,
     system-ui,
-    sans-serif,
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    "Noto Color Emoji";
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   --font-mono:
+    "Fira Code",
     ui-monospace,
     SFMono-Regular,
     "SF Mono",
     Menlo,
     Consolas,
-    "Liberation Mono",
     monospace;
 }
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --text-secondary: #404040;
-  --text-muted: #525252;
-}
+/*
+ * Design System: prompts.ag — Terminal Noir with Amber Glow
+ * Source: docs/specs/design/DESIGN_LANGUAGE.md
+ *
+ * Dark-first design. Amber glows against darkness like syntax highlighting.
+ * Colors: amber (#f59e0b), cream (#fef3c7), dark (#0c0a09), off-white (#fafafa)
+ * Typography: Fira Code (matches wordmark)
+ */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --text-secondary: #d4d4d4;
-    --text-muted: #a3a3a3;
-  }
+:root {
+  /* Dark-first palette */
+  --background: #0c0a09;
+  --foreground: #fafafa;
+
+  /* Text hierarchy */
+  --text-secondary: #d4d4d4;
+  --text-muted: #a3a3a3;
+
+  /* Accent - amber from wordmark */
+  --accent: #f59e0b;
+  --accent-foreground: #0c0a09;
+  --accent-light: #fef3c7;
+  --accent-glow: rgba(245, 158, 11, 0.5);
+  --accent-glow-soft: rgba(245, 158, 11, 0.15);
+
+  /* Borders and surfaces */
+  --border: rgba(255, 255, 255, 0.1);
+  --border-accent: rgba(245, 158, 11, 0.4);
+  --surface: rgba(23, 23, 23, 0.6);
+  --surface-solid: #171717;
+
+  /* Radius */
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* Grid pattern */
+  --grid-color: rgba(255, 255, 255, 0.03);
+  --grid-size: 32px;
 }
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Grid background pattern */
+.grid-background {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Noise texture overlay for depth */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: -1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
 /* Focus states for keyboard navigation */
 a:focus-visible,
 button:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--foreground);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -64,19 +113,166 @@ pre {
   word-break: break-word;
 }
 
-/* Prose styling for content sections */
-.prose {
-  --tw-prose-body: var(--foreground);
-  --tw-prose-headings: var(--foreground);
-  --tw-prose-links: var(--foreground);
-  --tw-prose-code: var(--foreground);
+/* Headlines in monospace */
+.font-display {
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
 }
 
-.prose a {
+/* ===== ANIMATIONS ===== */
+
+/* Fade in up for staggered reveals */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+/* Pulsing amber glow for wordmark */
+@keyframes amberGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px var(--accent-glow-soft)) drop-shadow(
+      0 0 40px rgba(245, 158, 11, 0.1)
+    );
+  }
+  50% {
+    filter: drop-shadow(0 0 30px var(--accent-glow)) drop-shadow(
+      0 0 60px rgba(245, 158, 11, 0.2)
+    );
+  }
+}
+
+.wordmark-glow {
+  animation: amberGlow 4s ease-in-out infinite;
+}
+
+/* Static glow for non-animated contexts */
+.glow-amber {
+  filter: drop-shadow(0 0 20px var(--accent-glow-soft));
+}
+
+/* ===== CARDS ===== */
+
+/* Glassmorphism card */
+.card-glass {
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s ease;
+}
+
+.card-glass:hover {
+  border-color: var(--border-accent);
+  background: rgba(23, 23, 23, 0.8);
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px var(--border-accent),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5),
+    0 0 20px -5px var(--accent-glow-soft);
+}
+
+/* ===== BUTTONS ===== */
+
+/* Primary CTA with amber */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #d97706;
+  box-shadow: 0 0 20px var(--accent-glow-soft);
+}
+
+/* Secondary/outline button */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ===== LINKS ===== */
+
+/* Accent underline animation */
+.accent-underline {
+  position: relative;
+  text-decoration: none;
+}
+
+.accent-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.2s ease;
+}
+
+.accent-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Footer link style */
+.link-muted {
+  color: var(--text-muted);
   text-decoration: underline;
   text-underline-offset: 2px;
+  transition: color 0.2s ease;
 }
 
-.prose a:hover {
-  opacity: 0.8;
+.link-muted:hover {
+  color: var(--accent);
 }

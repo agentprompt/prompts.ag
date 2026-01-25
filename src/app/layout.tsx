@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Fira_Code } from "next/font/google";
 import "./globals.css";
+
+const firaCode = Fira_Code({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -41,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" dir="ltr">
+    <html lang="en" dir="ltr" className={firaCode.variable}>
       <body className="antialiased">{children}</body>
     </html>
   );
