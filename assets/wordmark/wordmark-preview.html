@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wordmark Variants Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #18181b;
+      color: #fafafa;
+      padding: 48px;
+      min-height: 100vh;
+    }
+    h1 { font-size: 24px; font-weight: 500; color: #fafafa; margin-bottom: 8px; }
+    .subtitle { color: #71717a; margin-bottom: 48px; font-size: 14px; }
+    h2 { 
+      font-size: 13px; 
+      font-weight: 500; 
+      color: #a1a1aa; 
+      margin: 40px 0 16px 0; 
+      text-transform: uppercase; 
+      letter-spacing: 0.05em;
+    }
+    
+    .variant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+    
+    .variant-card {
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .variant-card.on-dark {
+      background: #0a0a0a;
+      border: 1px solid #27272a;
+    }
+    
+    .variant-card.on-light {
+      background: #fafafa;
+      border: 1px solid #e4e4e7;
+    }
+    
+    .variant-card.on-white {
+      background: #ffffff;
+      border: 1px solid #e4e4e7;
+    }
+    
+    .variant-label {
+      font-size: 12px;
+      color: #71717a;
+    }
+    
+    .variant-card.on-light .variant-label,
+    .variant-card.on-white .variant-label {
+      color: #52525b;
+    }
+    
+    .file-name {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: #52525b;
+      margin-top: 8px;
+    }
+    
+    .variant-card.on-light .file-name,
+    .variant-card.on-white .file-name {
+      color: #a1a1aa;
+    }
+
+    .size-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .adaptive-demo {
+      background: linear-gradient(90deg, #0a0a0a 50%, #fafafa 50%);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #27272a;
+    }
+
+    .adaptive-note {
+      font-size: 12px;
+      color: #71717a;
+      margin-top: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wordmark Variants</h1>
+  <p class="subtitle">All text rendered as paths (Fira Code Medium)</p>
+
+  <h2>Dark Background</h2>
+  <div class="variant-grid">
+    <div class="variant-card on-dark">
+      <img src="wordmark-dark.svg" alt="Dark wordmark" style="height: 48px;">
+      <div>
+        <div class="variant-label">For light mode / light backgrounds</div>
+        <div class="file-name">wordmark-dark.svg</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Light Backgrounds (for dark mode contexts)</h2>
+  <div class="variant-grid">
+    <div class="variant-card on-dark">
+      <img src="wordmark-light.svg" alt="Light wordmark" style="height: 48px;">
+      <div>
+        <div class="variant-label">Off-white (#fafafa) - softer on dark backgrounds</div>
+        <div class="file-name">wordmark-light.svg</div>
+      </div>
+    </div>
+    <div class="variant-card on-dark">
+      <img src="wordmark-white.svg" alt="White wordmark" style="height: 48px;">
+      <div>
+        <div class="variant-label">Pure white (#ffffff)</div>
+        <div class="file-name">wordmark-white.svg</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Adaptive (responds to system preference)</h2>
+  <div class="variant-grid">
+    <div class="adaptive-demo">
+      <div style="display: flex; justify-content: center;">
+        <img src="wordmark-adaptive.svg" alt="Adaptive wordmark" style="height: 48px;">
+      </div>
+      <div class="adaptive-note">
+        Shows dark bg in light mode, off-white bg in dark mode<br>
+        <span class="file-name">wordmark-adaptive.svg</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Scale Comparison</h2>
+  <div class="variant-card on-dark" style="max-width: 600px;">
+    <div class="size-row">
+      <div>
+        <img src="wordmark-dark.svg" alt="64px" style="height: 64px;">
+        <div class="file-name">64px</div>
+      </div>
+      <div>
+        <img src="wordmark-dark.svg" alt="48px" style="height: 48px;">
+        <div class="file-name">48px</div>
+      </div>
+      <div>
+        <img src="wordmark-dark.svg" alt="32px" style="height: 32px;">
+        <div class="file-name">32px</div>
+      </div>
+      <div>
+        <img src="wordmark-dark.svg" alt="24px" style="height: 24px;">
+        <div class="file-name">24px</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Context Previews</h2>
+  <div class="variant-grid">
+    <div class="variant-card on-light">
+      <img src="wordmark-dark.svg" alt="On light" style="height: 40px;">
+      <div class="variant-label">Light background context</div>
+    </div>
+    <div class="variant-card on-dark">
+      <img src="wordmark-light.svg" alt="On dark" style="height: 40px;">
+      <div class="variant-label">Dark background context</div>
+    </div>
+  </div>
+
+</body>
+</html>
