@@ -23,8 +23,8 @@ export default function CodeExample({ code, filename, language = "ag" }: CodeExa
   };
 
   return (
-    <div className="rounded-lg border border-current/20 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-current/20">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]">
         <span className="text-sm text-[var(--text-muted)] font-mono">{filename || "\u00A0"}</span>
         <button
           onClick={copyToClipboard}
