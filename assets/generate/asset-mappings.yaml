@@ -1,0 +1,21 @@
+# Asset Mappings
+# Maps generated assets to their live destinations
+# Paths are relative to the prompts.ag directory
+
+# Favicon
+favicon:
+  - source: assets/favicon/favicon-adaptive.svg
+    dest: ../docs/favicon.svg
+
+# Wordmarks for documentation site
+wordmark:
+  - source: assets/wordmark/wordmark-dark-tight.svg
+    dest: ../docs/logo/wordmark-dark-tight.svg
+
+  - source: assets/wordmark/wordmark-light-tight.svg
+    dest: ../docs/logo/wordmark-light-tight.svg
+
+# Icons (uncomment as needed)
+# icon:
+#   - source: assets/icon/icon-rounded.svg
+#     dest: public/icons/icon-rounded.svg
