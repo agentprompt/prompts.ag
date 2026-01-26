@@ -21,8 +21,9 @@ Configuration:
     Edit the CONFIG section below to adjust padding, colors, etc.
 """
 
-import re
 from pathlib import Path
+
+from svgpathtools import parse_path  # type: ignore[import-not-found]
 
 # =============================================================================
 # CONFIG - Edit these values to adjust the output
@@ -116,70 +117,35 @@ CONTENT_BOUNDS = {
 # =============================================================================
 
 
-def translate_path(path_str: str, offset_x: float, offset_y: float) -> str:
+def transform_path(
+    d: str,
+    translate: tuple[float, float] = (0.0, 0.0),
+    scale: float = 1.0,
+) -> str:
     """
-    Translate SVG path coordinates by offset.
+    Transform SVG path data using svgpathtools.
+
+    Applies scale first, then translation (standard transform order).
 
     Args:
-        path_str: SVG path d attribute string
-        offset_x: Horizontal offset (positive = move right)
-        offset_y: Vertical offset (positive = move down)
+        d: SVG path d attribute string
+        translate: (x, y) offset to apply after scaling
+        scale: Scale factor to apply before translation
 
     Returns:
-        Translated path string
+        Transformed path string
     """
-    result = []
-    tokens = re.findall(r"[MmLlHhVvCcSsQqTtAaZz]|[-+]?[0-9]*\.?[0-9]+", path_str)
+    path = parse_path(d)
 
-    cmd = ""
-    coord_idx = 0
+    # Apply scale if not identity (use abs comparison for floats)
+    if abs(scale - 1.0) > 1e-9:
+        path = path.scaled(scale)
 
-    for token in tokens:
-        if token.isalpha() and len(token) == 1:
-            cmd = token.upper()
-            coord_idx = 0
-            result.append(token)
-        else:
-            val = float(token)
-            is_x = False
-            is_y = False
+    # Apply translation if non-zero
+    if abs(translate[0]) > 1e-9 or abs(translate[1]) > 1e-9:
+        path = path.translated(complex(translate[0], translate[1]))
 
-            if cmd == "H":
-                is_x = True
-            elif cmd == "V":
-                is_y = True
-            elif cmd == "Z":
-                pass
-            elif cmd == "A":
-                # Arc: rx ry x-rot large-arc sweep x y
-                pos = coord_idx % 7
-                if pos == 5:
-                    is_x = True
-                elif pos == 6:
-                    is_y = True
-                # rx, ry (pos 0, 1) don't need translation
-            elif cmd in ("M", "L", "T"):
-                is_x = (coord_idx % 2) == 0
-                is_y = (coord_idx % 2) == 1
-            elif cmd == "Q":
-                is_x = (coord_idx % 4) in (0, 2)
-                is_y = (coord_idx % 4) in (1, 3)
-            elif cmd == "C":
-                is_x = (coord_idx % 6) in (0, 2, 4)
-                is_y = (coord_idx % 6) in (1, 3, 5)
-            elif cmd == "S":
-                is_x = (coord_idx % 4) in (0, 2)
-                is_y = (coord_idx % 4) in (1, 3)
-
-            if is_x:
-                val = val + offset_x
-            elif is_y:
-                val = val + offset_y
-
-            result.append(f" {val:.1f}")
-            coord_idx += 1
-
-    return "".join(result)
+    return path.d()  # type: ignore[no-any-return]
 
 
 def make_path_element(d: str, fill: str, comment: str | None = None) -> str:
@@ -233,7 +199,7 @@ def generate_wordmark(
         offset_y = v_padding - content_top
 
         def transform(path: str) -> str:
-            return translate_path(path, offset_x, offset_y)
+            return transform_path(path, translate=(offset_x, offset_y))
     else:
         # Regular version: use original dimensions, no transformation
         corner_radius = wordmark_config["regular"]["corner_radius"]
