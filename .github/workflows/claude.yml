@@ -16,6 +16,12 @@ on:
   pull_request_review:
     types: [submitted]
 
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  id-token: write
+
 jobs:
   claude:
     uses: simonheimlicher/spx-gh-actions/.github/workflows/claude.yml@main
