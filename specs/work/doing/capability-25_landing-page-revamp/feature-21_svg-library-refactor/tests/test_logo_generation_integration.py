@@ -1,0 +1,129 @@
+"""Feature Integration Tests: SVG Library Refactor
+
+Level 2 tests verifying the full logo generation pipeline works end-to-end.
+"""
+
+import subprocess
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import yaml
+
+
+# Path to the project root (prompts.ag)
+# tests -> feature-21 -> capability-25 -> doing -> work -> specs -> prompts.ag
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent.parent.parent
+
+
+class TestLogoGenerationPipeline:
+    """FI1: Full logo generation pipeline"""
+
+    def test_logo_generation_script_succeeds(self) -> None:
+        """GIVEN generate_logos.py WHEN run with uv THEN exits successfully"""
+        result = subprocess.run(
+            ["uv", "run", "assets/generate/generate_logos.py"],
+            capture_output=True,
+            text=True,
+            cwd=PROJECT_ROOT,
+        )
+
+        assert result.returncode == 0, f"Script failed: {result.stderr}"
+
+    def test_all_mapped_assets_exist(self) -> None:
+        """GIVEN asset-mappings.yaml WHEN generation completes THEN all dest files exist"""
+        # Load mappings
+        mappings_file = PROJECT_ROOT / "assets" / "generate" / "asset-mappings.yaml"
+        with open(mappings_file) as f:
+            mappings = yaml.safe_load(f)
+
+        public_dir = PROJECT_ROOT / "public"
+
+        # Verify each mapped asset exists
+        missing = []
+        for mapping in mappings["assets"]:
+            dest_path = public_dir / mapping["dest"]
+            if not dest_path.exists():
+                missing.append(mapping["dest"])
+
+        assert not missing, f"Missing assets in public/: {missing}"
+
+    def test_generated_assets_are_non_empty(self) -> None:
+        """GIVEN deployed assets WHEN checked THEN all have content"""
+        mappings_file = PROJECT_ROOT / "assets" / "generate" / "asset-mappings.yaml"
+        with open(mappings_file) as f:
+            mappings = yaml.safe_load(f)
+
+        public_dir = PROJECT_ROOT / "public"
+
+        empty = []
+        for mapping in mappings["assets"]:
+            dest_path = public_dir / mapping["dest"]
+            if dest_path.exists() and dest_path.stat().st_size == 0:
+                empty.append(mapping["dest"])
+
+        assert not empty, f"Empty assets in public/: {empty}"
+
+
+class TestSvgValidity:
+    """FI2: SVG validity checks"""
+
+    def test_generated_svgs_are_well_formed_xml(self) -> None:
+        """GIVEN generated SVGs WHEN parsed as XML THEN no parse errors"""
+        mappings_file = PROJECT_ROOT / "assets" / "generate" / "asset-mappings.yaml"
+        with open(mappings_file) as f:
+            mappings = yaml.safe_load(f)
+
+        public_dir = PROJECT_ROOT / "public"
+
+        parse_errors = []
+        for mapping in mappings["assets"]:
+            dest_path = public_dir / mapping["dest"]
+            if dest_path.exists() and dest_path.suffix == ".svg":
+                try:
+                    ET.parse(dest_path)
+                except ET.ParseError as e:
+                    parse_errors.append(f"{mapping['dest']}: {e}")
+
+        assert not parse_errors, f"SVG parse errors: {parse_errors}"
+
+    def test_generated_svgs_have_svg_root_element(self) -> None:
+        """GIVEN generated SVGs WHEN parsed THEN root element is <svg>"""
+        mappings_file = PROJECT_ROOT / "assets" / "generate" / "asset-mappings.yaml"
+        with open(mappings_file) as f:
+            mappings = yaml.safe_load(f)
+
+        public_dir = PROJECT_ROOT / "public"
+
+        invalid = []
+        for mapping in mappings["assets"]:
+            dest_path = public_dir / mapping["dest"]
+            if dest_path.exists() and dest_path.suffix == ".svg":
+                tree = ET.parse(dest_path)
+                root = tree.getroot()
+                # SVG namespace handling
+                tag = root.tag.split("}")[-1] if "}" in root.tag else root.tag
+                if tag != "svg":
+                    invalid.append(
+                        f"{mapping['dest']}: root is <{tag}>, expected <svg>"
+                    )
+
+        assert not invalid, f"Invalid SVG structure: {invalid}"
+
+    def test_generated_svgs_have_viewbox(self) -> None:
+        """GIVEN generated SVGs WHEN checked THEN all have viewBox attribute"""
+        mappings_file = PROJECT_ROOT / "assets" / "generate" / "asset-mappings.yaml"
+        with open(mappings_file) as f:
+            mappings = yaml.safe_load(f)
+
+        public_dir = PROJECT_ROOT / "public"
+
+        missing_viewbox = []
+        for mapping in mappings["assets"]:
+            dest_path = public_dir / mapping["dest"]
+            if dest_path.exists() and dest_path.suffix == ".svg":
+                tree = ET.parse(dest_path)
+                root = tree.getroot()
+                if "viewBox" not in root.attrib:
+                    missing_viewbox.append(mapping["dest"])
+
+        assert not missing_viewbox, f"SVGs missing viewBox: {missing_viewbox}"
