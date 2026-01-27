@@ -42,10 +42,10 @@ export default function Home() {
             </div>
 
             {/* Tagline */}
-            <p className="animate-in opacity-0 animation-delay-100 text-lg md:text-xl text-(--text-secondary) mb-10 leading-relaxed font-display">
+            <p className="animate-in opacity-0 animation-delay-100 text-lg md:text-xl text-[var(--text-secondary)] mb-10 leading-relaxed font-display">
               Structured prompts that models prefer.
               <br />
-              <span className="text-(--text-muted)">
+              <span className="text-[var(--text-muted)]">
                 Markdown content in XML tags—the format frontier labs recommend.
               </span>
             </p>
