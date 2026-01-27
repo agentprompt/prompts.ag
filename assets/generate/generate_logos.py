@@ -21,8 +21,11 @@ Configuration:
     Edit the CONFIG section below to adjust padding, colors, etc.
 """
 
+import shutil
 from pathlib import Path
+from typing import Any
 
+import yaml
 from svgpathtools import parse_path  # type: ignore[import-not-found]
 
 # =============================================================================
@@ -70,12 +73,19 @@ CONFIG = {
         "white_bg": "#ffffff",
         "amber": "#f59e0b",
         "cream": "#fef3c7",
-        "off_white": "#fafafa",
         "dark_text": "#0c0a09",
     },
     # Output directory
     "output_dir": Path("."),
 }
+
+# =============================================================================
+# CONSTANTS - YAML Keys
+# =============================================================================
+
+YAML_KEY_ASSETS = "assets"
+YAML_KEY_SOURCE = "source"
+YAML_KEY_DEST = "dest"
 
 # =============================================================================
 # ICON AND TEXT PATH DATA
@@ -155,6 +165,42 @@ def make_path_element(d: str, fill: str, comment: str | None = None) -> str:
 
 
 # =============================================================================
+# ASSET DEPLOYMENT FUNCTIONS
+# =============================================================================
+
+
+def deploy_assets(
+    mappings: dict[str, Any],
+    output_dir: Path,
+    public_dir: Path,
+) -> None:
+    """
+    Copy generated assets to public directory based on mappings.
+
+    Args:
+        mappings: Parsed YAML dict with 'assets' key containing list of
+                  {source, dest} mappings
+        output_dir: Directory containing generated files (source root)
+        public_dir: Destination directory (typically 'public/')
+
+    Raises:
+        KeyError: If mappings dict is missing required keys
+        FileNotFoundError: If source file doesn't exist
+    """
+    assets = mappings[YAML_KEY_ASSETS]
+
+    for mapping in assets:
+        source_file = output_dir / mapping[YAML_KEY_SOURCE]
+        dest_file = public_dir / mapping[YAML_KEY_DEST]
+
+        # Create destination directory if needed
+        dest_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Copy file with metadata preservation
+        shutil.copy2(source_file, dest_file)
+
+
+# =============================================================================
 # SVG GENERATION FUNCTIONS
 # =============================================================================
 
@@ -219,7 +265,7 @@ def generate_wordmark(
     if variant == "dark":
         bg_color = colors["dark_bg"]
         icon_ag_color = colors["cream"]
-        prompt_color = colors["off_white"]
+        prompt_color = colors["light_bg"]
     elif variant == "light":
         bg_color = colors["light_bg"]
         icon_ag_color = colors["dark_text"]
@@ -310,7 +356,7 @@ def generate_adaptive_wordmark(
     prompt_light = []
     for letter in ["p", "r", "o", "m", "p2", "t2"]:
         prompt_light.append(
-            make_path_element(transform(TEXT_PATHS[letter]), colors["off_white"])
+            make_path_element(transform(TEXT_PATHS[letter]), colors["light_bg"])
         )
 
     # Text "prompt" - dark version (for light bg)
@@ -412,6 +458,21 @@ def main():
 
     print()
     print("Done! Generated 8 wordmark files.")
+
+    # Deploy assets to public directory
+    print()
+    print("Deploying assets...")
+    mappings_file = Path(__file__).parent / "asset-mappings.yaml"
+    public_dir = Path(__file__).parent.parent.parent / "public"
+
+    with open(mappings_file) as f:  # noqa: S108 - Path is hardcoded relative to script, no user input
+        mappings = yaml.safe_load(f)
+
+    deploy_assets(mappings, output_dir, public_dir)
+
+    deployed_count = len(mappings[YAML_KEY_ASSETS])
+    print(f"  ✓ Deployed {deployed_count} assets to {public_dir}")
+
     print()
     print("To adjust padding, edit CONFIG at the top of this script:")
     print(
