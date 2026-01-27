@@ -2,24 +2,44 @@
 
 ## Functional Requirements
 
-### FR1: Parse asset-mappings.yaml with PyYAML
+### FR1: Parse categorized asset-mappings.yaml with PyYAML
 
 ```gherkin
-GIVEN asset-mappings.yaml defines source → destination mappings
+GIVEN asset-mappings.yaml defines category → mappings structure
 WHEN I parse it with PyYAML
-THEN I get a list of {source, dest} pairs for file operations
+THEN I get a dict where each key is a category (favicon, wordmark, icon)
+AND each value is a list of {source, dest} pairs
+AND source is just a filename (category implies directory)
 ```
+
+**YAML Structure (DRY - category implies source directory):**
+
+```yaml
+# Category key implies source directory: assets/{category}/
+# Dest paths are relative to public_dir (prompts.ag/public/)
+favicon:
+  - source: favicon-adaptive.svg # just filename
+    dest: ../../docs/favicon.svg # → agentprompt/docs/
+
+wordmark:
+  - source: wordmark-dark-tight.svg # just filename
+    dest: ../../docs/logo/wordmark-dark-tight.svg # → agentprompt/docs/logo/
+```
+
+**Why categorized:** The category name (`favicon`, `wordmark`) implies the source directory (`assets/favicon/`, `assets/wordmark/`), eliminating redundant path prefixes in every mapping.
 
 #### Files created/modified
 
 1. `assets/generate/generate_logos.py` [modify]: Add YAML parsing with PyYAML
+2. `assets/generate/asset-mappings.yaml` [modify]: Use categorized structure
 
-### FR2: Copy assets to public directory
+### FR2: Copy assets to destinations with category-based source paths
 
 ```gherkin
-GIVEN parsed asset mappings
+GIVEN parsed category mappings
 WHEN I run the deployment function
-THEN each source file is copied to its destination in public/
+THEN source path is constructed as assets/{category}/{source_filename}
+AND each file is copied to its destination
 AND destination directories are created if needed
 ```
 
@@ -30,7 +50,7 @@ AND destination directories are created if needed
 ### FR3: Integrate deployment into main script flow
 
 ```gherkin
-GIVEN generate_logos.py generates SVGs to output directory
+GIVEN generate_logos.py generates SVGs to assets/{category}/ directories
 WHEN script completes generation
 THEN it automatically deploys assets based on mappings
 AND reports which files were copied
@@ -68,12 +88,18 @@ import pytest
 import yaml
 from pathlib import Path
 
+# Constants for test data
+CATEGORY_FAVICON = "favicon"
+CATEGORY_WORDMARK = "wordmark"
+YAML_KEY_SOURCE = "source"
+YAML_KEY_DEST = "dest"
+
 
 class TestYamlParsing:
-    """Level 1: Test YAML parsing produces correct structure"""
+    """Level 1: Test YAML parsing produces categorized structure"""
 
-    def test_parse_asset_mappings_structure(self):
-        """GIVEN asset-mappings.yaml WHEN parsed THEN has assets list"""
+    def test_parse_asset_mappings_has_categories(self):
+        """GIVEN asset-mappings.yaml WHEN parsed THEN has category keys"""
         # Given
         mappings_path = Path("assets/generate/asset-mappings.yaml")
 
@@ -81,9 +107,20 @@ class TestYamlParsing:
         with open(mappings_path) as f:
             data = yaml.safe_load(f)
 
+        # Then: At least one known category exists
+        known_categories = {CATEGORY_FAVICON, CATEGORY_WORDMARK}
+        assert any(cat in data for cat in known_categories)
+
+    def test_each_category_contains_list(self):
+        """GIVEN parsed mappings WHEN checked THEN each category value is a list"""
+        # Given
+        mappings_path = Path("assets/generate/asset-mappings.yaml")
+        with open(mappings_path) as f:
+            data = yaml.safe_load(f)
+
         # Then
-        assert "assets" in data
-        assert isinstance(data["assets"], list)
+        for category, items in data.items():
+            assert isinstance(items, list), f"Category {category} should be a list"
 
     def test_each_mapping_has_source_and_dest(self):
         """GIVEN parsed mappings WHEN iterated THEN each has source and dest"""
@@ -93,78 +130,100 @@ class TestYamlParsing:
             data = yaml.safe_load(f)
 
         # Then
-        for mapping in data["assets"]:
-            assert "source" in mapping, f"Missing source in {mapping}"
-            assert "dest" in mapping, f"Missing dest in {mapping}"
+        for category, items in data.items():
+            for mapping in items:
+                assert YAML_KEY_SOURCE in mapping, (
+                    f"Missing source in {category}: {mapping}"
+                )
+                assert YAML_KEY_DEST in mapping, (
+                    f"Missing dest in {category}: {mapping}"
+                )
 
-    def test_source_paths_are_relative(self):
-        """GIVEN mappings WHEN checked THEN source paths don't start with /"""
+    def test_source_is_filename_only(self):
+        """GIVEN mappings WHEN checked THEN source is filename (no path separators)"""
         # Given
         mappings_path = Path("assets/generate/asset-mappings.yaml")
         with open(mappings_path) as f:
             data = yaml.safe_load(f)
 
-        # Then
-        for mapping in data["assets"]:
-            assert not mapping["source"].startswith("/"), (
-                f"Source should be relative: {mapping['source']}"
-            )
-
-    def test_dest_paths_target_public(self):
-        """GIVEN mappings WHEN checked THEN dest paths are under public/"""
-        # Given
-        mappings_path = Path("assets/generate/asset-mappings.yaml")
-        with open(mappings_path) as f:
-            data = yaml.safe_load(f)
-
-        # Then
-        for mapping in data["assets"]:
-            # Dest should be relative path that will go under public/
-            assert not mapping["dest"].startswith("/"), (
-                f"Dest should be relative: {mapping['dest']}"
-            )
+        # Then: Source should be just a filename, not a path
+        for category, items in data.items():
+            for mapping in items:
+                source = mapping[YAML_KEY_SOURCE]
+                assert "/" not in source, f"Source should be filename only: {source}"
 
 
 class TestDeployAssetsLogic:
-    """Level 1: Test deployment logic with dependency injection"""
+    """Level 1: Test deployment logic with categorized mappings"""
+
+    def test_deploy_constructs_source_from_category(self, tmp_path):
+        """GIVEN categorized mapping WHEN deployed THEN source path is assets/{category}/{filename}"""
+        # Given
+        from assets.generate.generate_logos import deploy_assets
+
+        assets_dir = tmp_path / "assets"
+        (assets_dir / CATEGORY_WORDMARK).mkdir(parents=True)
+        (assets_dir / CATEGORY_WORDMARK / "logo.svg").write_text("<svg></svg>")
+
+        public_dir = tmp_path / "public"
+
+        mappings = {
+            CATEGORY_WORDMARK: [
+                {YAML_KEY_SOURCE: "logo.svg", YAML_KEY_DEST: "logo.svg"}
+            ]
+        }
+
+        # When
+        deploy_assets(mappings, assets_dir, public_dir)
+
+        # Then
+        assert (public_dir / "logo.svg").exists()
 
     def test_deploy_creates_missing_directories(self, tmp_path):
         """GIVEN dest dir doesn't exist WHEN deploy THEN creates it"""
         # Given
         from assets.generate.generate_logos import deploy_assets
 
-        output_dir = tmp_path / "output"
-        output_dir.mkdir()
-        (output_dir / "test.svg").write_text("<svg></svg>")
+        assets_dir = tmp_path / "assets"
+        (assets_dir / CATEGORY_FAVICON).mkdir(parents=True)
+        (assets_dir / CATEGORY_FAVICON / "icon.svg").write_text("<svg></svg>")
 
         public_dir = tmp_path / "public"
         # Note: public_dir doesn't exist yet
 
-        mappings = {"assets": [{"source": "test.svg", "dest": "icons/test.svg"}]}
+        mappings = {
+            CATEGORY_FAVICON: [
+                {YAML_KEY_SOURCE: "icon.svg", YAML_KEY_DEST: "icons/icon.svg"}
+            ]
+        }
 
         # When
-        deploy_assets(mappings, output_dir, public_dir)
+        deploy_assets(mappings, assets_dir, public_dir)
 
         # Then
-        assert (public_dir / "icons" / "test.svg").exists()
+        assert (public_dir / "icons" / "icon.svg").exists()
 
     def test_deploy_copies_file_content(self, tmp_path):
         """GIVEN source file WHEN deployed THEN content matches"""
         # Given
         from assets.generate.generate_logos import deploy_assets
 
-        output_dir = tmp_path / "output"
-        output_dir.mkdir()
+        assets_dir = tmp_path / "assets"
+        (assets_dir / CATEGORY_WORDMARK).mkdir(parents=True)
         content = "<svg>test content</svg>"
-        (output_dir / "logo.svg").write_text(content)
+        (assets_dir / CATEGORY_WORDMARK / "logo.svg").write_text(content)
 
         public_dir = tmp_path / "public"
         public_dir.mkdir()
 
-        mappings = {"assets": [{"source": "logo.svg", "dest": "logo.svg"}]}
+        mappings = {
+            CATEGORY_WORDMARK: [
+                {YAML_KEY_SOURCE: "logo.svg", YAML_KEY_DEST: "logo.svg"}
+            ]
+        }
 
         # When
-        deploy_assets(mappings, output_dir, public_dir)
+        deploy_assets(mappings, assets_dir, public_dir)
 
         # Then
         assert (public_dir / "logo.svg").read_text() == content

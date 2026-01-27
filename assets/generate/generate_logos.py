@@ -75,15 +75,12 @@ CONFIG = {
         "cream": "#fef3c7",
         "dark_text": "#0c0a09",
     },
-    # Output directory
-    "output_dir": Path("."),
 }
 
 # =============================================================================
 # CONSTANTS - YAML Keys
 # =============================================================================
 
-YAML_KEY_ASSETS = "assets"
 YAML_KEY_SOURCE = "source"
 YAML_KEY_DEST = "dest"
 
@@ -171,33 +168,41 @@ def make_path_element(d: str, fill: str, comment: str | None = None) -> str:
 
 def deploy_assets(
     mappings: dict[str, Any],
-    output_dir: Path,
+    assets_dir: Path,
     public_dir: Path,
-) -> None:
+) -> int:
     """
-    Copy generated assets to public directory based on mappings.
+    Copy generated assets to public directory based on categorized mappings.
 
     Args:
-        mappings: Parsed YAML dict with 'assets' key containing list of
-                  {source, dest} mappings
-        output_dir: Directory containing generated files (source root)
+        mappings: Parsed YAML dict where each key is a category (favicon, wordmark)
+                  and each value is a list of {source, dest} mappings.
+                  Source is filename only; category implies source directory.
+        assets_dir: Root assets directory (source paths are assets_dir/category/filename)
         public_dir: Destination directory (typically 'public/')
 
+    Returns:
+        Number of files deployed
+
     Raises:
-        KeyError: If mappings dict is missing required keys
         FileNotFoundError: If source file doesn't exist
     """
-    assets = mappings[YAML_KEY_ASSETS]
+    deployed = 0
 
-    for mapping in assets:
-        source_file = output_dir / mapping[YAML_KEY_SOURCE]
-        dest_file = public_dir / mapping[YAML_KEY_DEST]
+    for category, items in mappings.items():
+        for mapping in items:
+            # Source path: assets_dir / category / filename
+            source_file = assets_dir / category / mapping[YAML_KEY_SOURCE]
+            dest_file = public_dir / mapping[YAML_KEY_DEST]
 
-        # Create destination directory if needed
-        dest_file.parent.mkdir(parents=True, exist_ok=True)
+            # Create destination directory if needed
+            dest_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Copy file with metadata preservation
-        shutil.copy2(source_file, dest_file)
+            # Copy file with metadata preservation
+            shutil.copy2(source_file, dest_file)
+            deployed += 1
+
+    return deployed
 
 
 # =============================================================================
@@ -423,8 +428,11 @@ def generate_adaptive_wordmark(
 
 
 def main():
-    output_dir = Path(CONFIG["output_dir"])
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # Assets directory structure: assets/{category}/
+    script_dir = Path(__file__).parent
+    assets_dir = script_dir.parent  # assets/generate/../ = assets/
+    wordmark_dir = assets_dir / "wordmark"
+    wordmark_dir.mkdir(parents=True, exist_ok=True)
 
     wordmark_config = CONFIG["wordmark"]
     variants = ["dark", "light", "white", "adaptive"]
@@ -438,21 +446,21 @@ def main():
         f"  Tight padding:   {wordmark_config['tight']['horizontal_padding']}px h, "
         f"{wordmark_config['tight']['vertical_padding']}px v"
     )
-    print(f"  Output directory: {output_dir}")
+    print(f"  Output directory: {wordmark_dir}")
     print()
 
     for variant in variants:
         # Regular version
         svg = generate_wordmark(variant, tight=False)
         filename = f"wordmark-{variant}.svg"
-        filepath = output_dir / filename
+        filepath = wordmark_dir / filename
         filepath.write_text(svg)
         print(f"  ✓ {filename}")
 
         # Tight version
         svg = generate_wordmark(variant, tight=True)
         filename = f"wordmark-{variant}-tight.svg"
-        filepath = output_dir / filename
+        filepath = wordmark_dir / filename
         filepath.write_text(svg)
         print(f"  ✓ {filename}")
 
@@ -462,15 +470,13 @@ def main():
     # Deploy assets to public directory
     print()
     print("Deploying assets...")
-    mappings_file = Path(__file__).parent / "asset-mappings.yaml"
-    public_dir = Path(__file__).parent.parent.parent / "public"
+    mappings_file = script_dir / "asset-mappings.yaml"
+    public_dir = assets_dir.parent / "public"
 
-    with open(mappings_file) as f:  # noqa: S108 - Path is hardcoded relative to script, no user input
+    with open(mappings_file) as f:
         mappings = yaml.safe_load(f)
 
-    deploy_assets(mappings, output_dir, public_dir)
-
-    deployed_count = len(mappings[YAML_KEY_ASSETS])
+    deployed_count = deploy_assets(mappings, assets_dir, public_dir)
     print(f"  ✓ Deployed {deployed_count} assets to {public_dir}")
 
     print()

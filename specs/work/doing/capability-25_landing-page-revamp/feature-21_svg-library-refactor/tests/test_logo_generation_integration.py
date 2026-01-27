@@ -14,6 +14,22 @@ import yaml
 # tests -> feature-21 -> capability-25 -> doing -> work -> specs -> prompts.ag
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent.parent.parent
 
+# Constants
+YAML_KEY_SOURCE = "source"
+YAML_KEY_DEST = "dest"
+
+
+def iter_mappings(mappings: dict) -> list[tuple[str, dict]]:
+    """Iterate over all mappings across categories.
+
+    Returns list of (category, mapping) tuples.
+    """
+    result = []
+    for category, items in mappings.items():
+        for mapping in items:
+            result.append((category, mapping))
+    return result
+
 
 class TestLogoGenerationPipeline:
     """FI1: Full logo generation pipeline"""
@@ -40,10 +56,10 @@ class TestLogoGenerationPipeline:
 
         # Verify each mapped asset exists
         missing = []
-        for mapping in mappings["assets"]:
-            dest_path = public_dir / mapping["dest"]
+        for category, mapping in iter_mappings(mappings):
+            dest_path = public_dir / mapping[YAML_KEY_DEST]
             if not dest_path.exists():
-                missing.append(mapping["dest"])
+                missing.append(f"{category}/{mapping[YAML_KEY_DEST]}")
 
         assert not missing, f"Missing assets in public/: {missing}"
 
@@ -56,10 +72,10 @@ class TestLogoGenerationPipeline:
         public_dir = PROJECT_ROOT / "public"
 
         empty = []
-        for mapping in mappings["assets"]:
-            dest_path = public_dir / mapping["dest"]
+        for category, mapping in iter_mappings(mappings):
+            dest_path = public_dir / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.stat().st_size == 0:
-                empty.append(mapping["dest"])
+                empty.append(f"{category}/{mapping[YAML_KEY_DEST]}")
 
         assert not empty, f"Empty assets in public/: {empty}"
 
@@ -76,13 +92,13 @@ class TestSvgValidity:
         public_dir = PROJECT_ROOT / "public"
 
         parse_errors = []
-        for mapping in mappings["assets"]:
-            dest_path = public_dir / mapping["dest"]
+        for category, mapping in iter_mappings(mappings):
+            dest_path = public_dir / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.suffix == ".svg":
                 try:
                     ET.parse(dest_path)
                 except ET.ParseError as e:
-                    parse_errors.append(f"{mapping['dest']}: {e}")
+                    parse_errors.append(f"{category}/{mapping[YAML_KEY_DEST]}: {e}")
 
         assert not parse_errors, f"SVG parse errors: {parse_errors}"
 
@@ -95,8 +111,8 @@ class TestSvgValidity:
         public_dir = PROJECT_ROOT / "public"
 
         invalid = []
-        for mapping in mappings["assets"]:
-            dest_path = public_dir / mapping["dest"]
+        for category, mapping in iter_mappings(mappings):
+            dest_path = public_dir / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.suffix == ".svg":
                 tree = ET.parse(dest_path)
                 root = tree.getroot()
@@ -104,7 +120,7 @@ class TestSvgValidity:
                 tag = root.tag.split("}")[-1] if "}" in root.tag else root.tag
                 if tag != "svg":
                     invalid.append(
-                        f"{mapping['dest']}: root is <{tag}>, expected <svg>"
+                        f"{category}/{mapping[YAML_KEY_DEST]}: root is <{tag}>, expected <svg>"
                     )
 
         assert not invalid, f"Invalid SVG structure: {invalid}"
@@ -118,12 +134,12 @@ class TestSvgValidity:
         public_dir = PROJECT_ROOT / "public"
 
         missing_viewbox = []
-        for mapping in mappings["assets"]:
-            dest_path = public_dir / mapping["dest"]
+        for category, mapping in iter_mappings(mappings):
+            dest_path = public_dir / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.suffix == ".svg":
                 tree = ET.parse(dest_path)
                 root = tree.getroot()
                 if "viewBox" not in root.attrib:
-                    missing_viewbox.append(mapping["dest"])
+                    missing_viewbox.append(f"{category}/{mapping[YAML_KEY_DEST]}")
 
         assert not missing_viewbox, f"SVGs missing viewBox: {missing_viewbox}"
