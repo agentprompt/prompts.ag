@@ -1,0 +1,15 @@
+# Asset Mappings
+# Maps generated assets to their live destinations
+# Paths are relative to project root (where package.json lives)
+# Category key implies source directory: assets/{category}/
+
+favicon:
+  - source: favicon-adaptive.svg
+    dest: mintlify/favicon.svg
+
+wordmark:
+  - source: wordmark-dark-tight.svg
+    dest: mintlify/logo/wordmark-dark-tight.svg
+
+  - source: wordmark-light-tight.svg
+    dest: mintlify/logo/wordmark-light-tight.svg
