@@ -1,0 +1,73 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "aspen",
+  "name": "prompts.ag",
+  "colors": {
+    "primary": "#f59e0b",
+    "light": "#f59e0b",
+    "dark": "#0D9373"
+  },
+  "favicon": "/favicon.svg",
+  "styling": {
+    "codeblocks": "dark"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guide",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "index",
+              "guidelines",
+              "format"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "approach",
+              "tooling"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/agentprompt/prompts.ag",
+          "icon": "github"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/wordmark-dark-tight.svg",
+    "dark": "/logo/wordmark-light-tight.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/agentprompt/prompts.ag"
+      }
+    ]
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "claude",
+      "chatgpt"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/agentprompt"
+    }
+  },
+  "description": "A living reference for structured prompt formats, tracking what frontier AI agents want."
+}

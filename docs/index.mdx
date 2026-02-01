@@ -1,0 +1,48 @@
+---
+title: "What agents want"
+description: "A living reference for structured prompt formats, synthesizing guidance from frontier labs."
+---
+
+<CardGroup cols={2}>
+  <Card title="Learn the format" icon="code" href="/guidelines">
+    Markdown content in XML-like tags—the format frontier models prefer.
+  </Card>
+  <Card title="View on GitHub" icon="github" href="https://github.com/agentprompt/docs">
+    Browse the source and contribute.
+  </Card>
+</CardGroup>
+
+## Example
+
+```text title="example.ag"
+You are a financial analyst. Generate a Q2 report.
+
+<context>
+AcmeCorp is a B2B SaaS company.
+Our investors value transparency.
+</context>
+
+<instructions>
+1. Revenue Growth, Profit Margins, Cash Flow
+2. Highlight strengths and improvements
+</instructions>
+
+<data>{{SPREADSHEET_DATA}}</data>
+```
+
+## Quick links
+
+<CardGroup cols={2}>
+  <Card title="Guidelines" icon="list-check" href="/guidelines">
+    What frontier labs recommend for structuring prompts.
+  </Card>
+  <Card title="Format specification" icon="file-code" href="/format">
+    The .ag file format explained.
+  </Card>
+  <Card title="Our approach" icon="compass" href="/approach">
+    Why we follow lab guidance instead of benchmarks.
+  </Card>
+  <Card title="Tooling roadmap" icon="wrench" href="/tooling">
+    Planned developer tools for .ag files.
+  </Card>
+</CardGroup>
