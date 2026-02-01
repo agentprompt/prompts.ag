@@ -1,0 +1,6 @@
+# Exclude specs directory (internal planning docs with code examples)
+specs/
+
+# Exclude project metadata
+CLAUDE.md
+README.md

@@ -1,0 +1,33 @@
+---
+title: "The format"
+description: "The .ag file format for AI agent prompts—simple, flexible, and preserving author intent."
+---
+
+`.ag` files (or `.ag.md` during the transition) contain prompts written for AI agents. The format is simple:
+
+- Pseudo-XML tags for semantic structure (not strict XML)
+- Markdown content inside and between tags
+- No attributes on tags
+- Flexible whitespace—inline or block tags, as author intends
+
+## Example
+
+```text title="quarterly-report.ag"
+You're a financial analyst at AcmeCorp. Generate a Q2 report.
+
+<context>
+AcmeCorp is a B2B SaaS company. Our investors value transparency.
+</context>
+
+<instructions>
+1. Include sections: Revenue Growth, Profit Margins, Cash Flow
+2. Highlight strengths and areas for improvement
+</instructions>
+
+Use this data:
+<data>{{SPREADSHEET_DATA}}</data>
+```
+
+## Design principles
+
+The format preserves author intent. Tooling validates and lints but does not reformat. What you write is what the agent receives.

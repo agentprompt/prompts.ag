@@ -1,0 +1,34 @@
+---
+title: "Markdown in XML tags"
+description: "Frontier models converge on the same format: Markdown content wrapped in XML-like tags."
+---
+
+Frontier models converge on the same format: Markdown content wrapped in XML-like tags. Here's what they want:
+
+## Use XML-like tags for structure
+
+Wrap distinct sections of your prompt in descriptive tags. Tags create clear boundaries that help models parse complex prompts reliably.
+
+## Choose descriptive tag names
+
+There are no canonical "best" tag names. Use names that describe the content: `<context>`, `<instructions>`, `<example>`, `<data>`. Be consistent within a prompt.
+
+## Keep Markdown inside tags
+
+Content within tags can use full Markdown formatting—lists, headers, code blocks. The tags provide semantic structure; Markdown handles formatting.
+
+## Nest tags when needed
+
+For hierarchical content, nest tags naturally. A `<examples>` section might contain multiple `<example>` tags. Maintain consistent indentation for readability.
+
+## Attributes: labs differ
+
+Anthropic recommends no attributes—use nested tags for metadata. OpenAI supports attributes like `<doc id="1" title="...">`. For portability across models, avoid attributes or test both approaches.
+
+## Long context: repeat instructions
+
+For prompts with extensive context, place instructions at both the beginning and end. This helps models maintain focus on your requirements throughout processing.
+
+---
+
+**Sources:** [Anthropic](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/use-xml-tags) · [OpenAI](https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-2_prompting_guide/) · [Google](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/structure-prompts)
