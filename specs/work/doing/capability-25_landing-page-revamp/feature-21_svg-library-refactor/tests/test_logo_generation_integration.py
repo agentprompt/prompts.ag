@@ -52,16 +52,16 @@ class TestLogoGenerationPipeline:
         with open(mappings_file) as f:
             mappings = yaml.safe_load(f)
 
-        public_dir = PROJECT_ROOT / "public"
+        project_root = PROJECT_ROOT
 
         # Verify each mapped asset exists
         missing = []
         for category, mapping in iter_mappings(mappings):
-            dest_path = public_dir / mapping[YAML_KEY_DEST]
+            dest_path = project_root / mapping[YAML_KEY_DEST]
             if not dest_path.exists():
                 missing.append(f"{category}/{mapping[YAML_KEY_DEST]}")
 
-        assert not missing, f"Missing assets in public/: {missing}"
+        assert not missing, f"Missing assets at destination: {missing}"
 
     def test_generated_assets_are_non_empty(self) -> None:
         """GIVEN deployed assets WHEN checked THEN all have content"""
@@ -69,15 +69,15 @@ class TestLogoGenerationPipeline:
         with open(mappings_file) as f:
             mappings = yaml.safe_load(f)
 
-        public_dir = PROJECT_ROOT / "public"
+        project_root = PROJECT_ROOT
 
         empty = []
         for category, mapping in iter_mappings(mappings):
-            dest_path = public_dir / mapping[YAML_KEY_DEST]
+            dest_path = project_root / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.stat().st_size == 0:
                 empty.append(f"{category}/{mapping[YAML_KEY_DEST]}")
 
-        assert not empty, f"Empty assets in public/: {empty}"
+        assert not empty, f"Empty assets at destination: {empty}"
 
 
 class TestSvgValidity:
@@ -89,11 +89,11 @@ class TestSvgValidity:
         with open(mappings_file) as f:
             mappings = yaml.safe_load(f)
 
-        public_dir = PROJECT_ROOT / "public"
+        project_root = PROJECT_ROOT
 
         parse_errors = []
         for category, mapping in iter_mappings(mappings):
-            dest_path = public_dir / mapping[YAML_KEY_DEST]
+            dest_path = project_root / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.suffix == ".svg":
                 try:
                     ET.parse(dest_path)
@@ -108,11 +108,11 @@ class TestSvgValidity:
         with open(mappings_file) as f:
             mappings = yaml.safe_load(f)
 
-        public_dir = PROJECT_ROOT / "public"
+        project_root = PROJECT_ROOT
 
         invalid = []
         for category, mapping in iter_mappings(mappings):
-            dest_path = public_dir / mapping[YAML_KEY_DEST]
+            dest_path = project_root / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.suffix == ".svg":
                 tree = ET.parse(dest_path)
                 root = tree.getroot()
@@ -131,11 +131,11 @@ class TestSvgValidity:
         with open(mappings_file) as f:
             mappings = yaml.safe_load(f)
 
-        public_dir = PROJECT_ROOT / "public"
+        project_root = PROJECT_ROOT
 
         missing_viewbox = []
         for category, mapping in iter_mappings(mappings):
-            dest_path = public_dir / mapping[YAML_KEY_DEST]
+            dest_path = project_root / mapping[YAML_KEY_DEST]
             if dest_path.exists() and dest_path.suffix == ".svg":
                 tree = ET.parse(dest_path)
                 root = tree.getroot()

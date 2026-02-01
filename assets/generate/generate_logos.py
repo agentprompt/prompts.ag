@@ -169,17 +169,17 @@ def make_path_element(d: str, fill: str, comment: str | None = None) -> str:
 def deploy_assets(
     mappings: dict[str, Any],
     assets_dir: Path,
-    public_dir: Path,
+    project_root: Path,
 ) -> int:
     """
-    Copy generated assets to public directory based on categorized mappings.
+    Copy generated assets to destinations based on categorized mappings.
 
     Args:
         mappings: Parsed YAML dict where each key is a category (favicon, wordmark)
                   and each value is a list of {source, dest} mappings.
                   Source is filename only; category implies source directory.
         assets_dir: Root assets directory (source paths are assets_dir/category/filename)
-        public_dir: Destination directory (typically 'public/')
+        project_root: Project root directory (dest paths are relative to this)
 
     Returns:
         Number of files deployed
@@ -193,7 +193,7 @@ def deploy_assets(
         for mapping in items:
             # Source path: assets_dir / category / filename
             source_file = assets_dir / category / mapping[YAML_KEY_SOURCE]
-            dest_file = public_dir / mapping[YAML_KEY_DEST]
+            dest_file = project_root / mapping[YAML_KEY_DEST]
 
             # Create destination directory if needed
             dest_file.parent.mkdir(parents=True, exist_ok=True)
@@ -467,17 +467,17 @@ def main():
     print()
     print("Done! Generated 8 wordmark files.")
 
-    # Deploy assets to public directory
+    # Deploy assets to destinations (paths relative to project root)
     print()
     print("Deploying assets...")
     mappings_file = script_dir / "asset-mappings.yaml"
-    public_dir = assets_dir.parent / "public"
+    project_root = Path.cwd()
 
     with open(mappings_file) as f:
         mappings = yaml.safe_load(f)
 
-    deployed_count = deploy_assets(mappings, assets_dir, public_dir)
-    print(f"  ✓ Deployed {deployed_count} assets to {public_dir}")
+    deployed_count = deploy_assets(mappings, assets_dir, project_root)
+    print(f"  ✓ Deployed {deployed_count} assets")
 
     print()
     print("To adjust padding, edit CONFIG at the top of this script:")

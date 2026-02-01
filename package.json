@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "logo:generate": "bash scripts/generate-logos.sh"
+    "logo:generate": "uv run assets/generate/generate_logos.py"
   },
   "dependencies": {
     "react": "^19.0.0",
