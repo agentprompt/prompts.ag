@@ -1,38 +1,70 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "svgpathtools>=1.6",
+#     "pyyaml>=6.0",
+# ]
+# ///
 """
-Agent Prompt Wordmark Generator
+Agent Prompt Logo Generator
 
-Generates all wordmark variants (dark, light, white, adaptive) in both
-regular and tight versions with configurable scale factors.
+Generates all logo variants:
+- Wordmarks (dark, light, white, adaptive) in regular and tight versions
+- Icons (rounded, square, transparent, adaptive, white-bg) in regular and tight versions
+- Favicons (adaptive)
 
 Usage:
-    python3 generate_wordmarks.py
+    uv run assets/generate/generate_logos.py
 
 Configuration:
-    Edit the CONFIG section below to adjust scale factors, padding, colors, etc.
+    Edit the CONFIG section below to adjust padding, colors, etc.
 """
 
-import re
+import shutil
 from pathlib import Path
+from typing import Any
+
+import yaml
+from svgpathtools import parse_path  # type: ignore[import-not-found]
 
 # =============================================================================
 # CONFIG - Edit these values to adjust the output
 # =============================================================================
 
 CONFIG = {
-    # Regular variant settings
-    "regular": {
-        "viewbox_width": 203,
-        "viewbox_height": 64,
-        "corner_radius": 8,
-        "horizontal_padding": 8,  # Approximate, for reference
-        "vertical_padding": 14,  # Approximate, for reference
+    # Wordmark settings
+    "wordmark": {
+        "regular": {
+            "viewbox_width": 203,
+            "viewbox_height": 64,
+            "corner_radius": 8,
+            "horizontal_padding": 8,
+            "vertical_padding": 14,
+        },
+        "tight": {
+            "corner_radius": 6,
+            "horizontal_padding": 14,
+            "vertical_padding": 9,
+        },
     },
-    # Tight variant settings (direct padding values, no content scaling)
-    "tight": {
-        "corner_radius": 6,
-        "horizontal_padding": 14,  # Padding on left and right
-        "vertical_padding": 9,  # Padding on top and bottom
+    # Icon settings
+    "icon": {
+        "regular": {
+            "viewbox_size": 100,
+            "corner_radius": 12,
+            "padding": 5,  # Content spans from padding to (viewbox_size - padding)
+        },
+        "tight": {
+            "corner_radius": 8,
+            "padding": 3,
+        },
+    },
+    # Favicon settings
+    "favicon": {
+        "viewbox_size": 32,
+        "corner_radius": 4,
+        "padding": 2,
     },
     # Colors
     "colors": {
@@ -41,12 +73,16 @@ CONFIG = {
         "white_bg": "#ffffff",
         "amber": "#f59e0b",
         "cream": "#fef3c7",
-        "off_white": "#fafafa",
         "dark_text": "#0c0a09",
     },
-    # Output directory
-    "output_dir": Path("."),
 }
+
+# =============================================================================
+# CONSTANTS - YAML Keys
+# =============================================================================
+
+YAML_KEY_SOURCE = "source"
+YAML_KEY_DEST = "dest"
 
 # =============================================================================
 # ICON AND TEXT PATH DATA
@@ -88,76 +124,85 @@ CONTENT_BOUNDS = {
 # =============================================================================
 
 
-def translate_path(path_str: str, offset_x: float, offset_y: float) -> str:
+def transform_path(
+    d: str,
+    translate: tuple[float, float] = (0.0, 0.0),
+    scale: float = 1.0,
+) -> str:
     """
-    Translate SVG path coordinates by offset.
+    Transform SVG path data using svgpathtools.
+
+    Applies scale first, then translation (standard transform order).
 
     Args:
-        path_str: SVG path d attribute string
-        offset_x: Horizontal offset (positive = move right)
-        offset_y: Vertical offset (positive = move down)
+        d: SVG path d attribute string
+        translate: (x, y) offset to apply after scaling
+        scale: Scale factor to apply before translation
 
     Returns:
-        Translated path string
+        Transformed path string
     """
-    result = []
-    tokens = re.findall(r"[MmLlHhVvCcSsQqTtAaZz]|[-+]?[0-9]*\.?[0-9]+", path_str)
+    path = parse_path(d)
 
-    cmd = ""
-    coord_idx = 0
+    # Apply scale if not identity (use abs comparison for floats)
+    if abs(scale - 1.0) > 1e-9:
+        path = path.scaled(scale)
 
-    for token in tokens:
-        if token.isalpha() and len(token) == 1:
-            cmd = token.upper()
-            coord_idx = 0
-            result.append(token)
-        else:
-            val = float(token)
-            is_x = False
-            is_y = False
+    # Apply translation if non-zero
+    if abs(translate[0]) > 1e-9 or abs(translate[1]) > 1e-9:
+        path = path.translated(complex(translate[0], translate[1]))
 
-            if cmd == "H":
-                is_x = True
-            elif cmd == "V":
-                is_y = True
-            elif cmd == "Z":
-                pass
-            elif cmd == "A":
-                # Arc: rx ry x-rot large-arc sweep x y
-                pos = coord_idx % 7
-                if pos == 5:
-                    is_x = True
-                elif pos == 6:
-                    is_y = True
-                # rx, ry (pos 0, 1) don't need translation
-            elif cmd in ("M", "L", "T"):
-                is_x = (coord_idx % 2) == 0
-                is_y = (coord_idx % 2) == 1
-            elif cmd == "Q":
-                is_x = (coord_idx % 4) in (0, 2)
-                is_y = (coord_idx % 4) in (1, 3)
-            elif cmd == "C":
-                is_x = (coord_idx % 6) in (0, 2, 4)
-                is_y = (coord_idx % 6) in (1, 3, 5)
-            elif cmd == "S":
-                is_x = (coord_idx % 4) in (0, 2)
-                is_y = (coord_idx % 4) in (1, 3)
-
-            if is_x:
-                val = val + offset_x
-            elif is_y:
-                val = val + offset_y
-
-            result.append(f" {val:.1f}")
-            coord_idx += 1
-
-    return "".join(result)
+    return path.d()  # type: ignore[no-any-return]
 
 
-def make_path_element(d: str, fill: str, comment: str = None) -> str:
+def make_path_element(d: str, fill: str, comment: str | None = None) -> str:
     """Create an SVG path element."""
     comment_str = f"    <!-- {comment} -->\n" if comment else ""
     return f'{comment_str}    <path d="{d}" fill="{fill}"/>'
+
+
+# =============================================================================
+# ASSET DEPLOYMENT FUNCTIONS
+# =============================================================================
+
+
+def deploy_assets(
+    mappings: dict[str, Any],
+    assets_dir: Path,
+    project_root: Path,
+) -> int:
+    """
+    Copy generated assets to destinations based on categorized mappings.
+
+    Args:
+        mappings: Parsed YAML dict where each key is a category (favicon, wordmark)
+                  and each value is a list of {source, dest} mappings.
+                  Source is filename only; category implies source directory.
+        assets_dir: Root assets directory (source paths are assets_dir/category/filename)
+        project_root: Project root directory (dest paths are relative to this)
+
+    Returns:
+        Number of files deployed
+
+    Raises:
+        FileNotFoundError: If source file doesn't exist
+    """
+    deployed = 0
+
+    for category, items in mappings.items():
+        for mapping in items:
+            # Source path: assets_dir / category / filename
+            source_file = assets_dir / category / mapping[YAML_KEY_SOURCE]
+            dest_file = project_root / mapping[YAML_KEY_DEST]
+
+            # Create destination directory if needed
+            dest_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Copy file with metadata preservation
+            shutil.copy2(source_file, dest_file)
+            deployed += 1
+
+    return deployed
 
 
 # =============================================================================
@@ -180,6 +225,7 @@ def generate_wordmark(
         SVG content as string
     """
     colors = CONFIG["colors"]
+    wordmark_config = CONFIG["wordmark"]
 
     if tight:
         # Content bounds from the original paths
@@ -191,9 +237,9 @@ def generate_wordmark(
         content_bottom = 50
         content_height = content_bottom - content_top
 
-        h_padding = CONFIG["tight"]["horizontal_padding"]
-        v_padding = CONFIG["tight"]["vertical_padding"]
-        corner_radius = CONFIG["tight"]["corner_radius"]
+        h_padding = wordmark_config["tight"]["horizontal_padding"]
+        v_padding = wordmark_config["tight"]["vertical_padding"]
+        corner_radius = wordmark_config["tight"]["corner_radius"]
 
         # Calculate viewbox dimensions
         viewbox_width = round(content_width + 2 * h_padding)
@@ -204,12 +250,12 @@ def generate_wordmark(
         offset_y = v_padding - content_top
 
         def transform(path: str) -> str:
-            return translate_path(path, offset_x, offset_y)
+            return transform_path(path, translate=(offset_x, offset_y))
     else:
         # Regular version: use original dimensions, no transformation
-        corner_radius = CONFIG["regular"]["corner_radius"]
-        viewbox_width = CONFIG["regular"]["viewbox_width"]
-        viewbox_height = CONFIG["regular"]["viewbox_height"]
+        corner_radius = wordmark_config["regular"]["corner_radius"]
+        viewbox_width = wordmark_config["regular"]["viewbox_width"]
+        viewbox_height = wordmark_config["regular"]["viewbox_height"]
 
         def transform(path: str) -> str:
             return path  # No transformation needed
@@ -224,7 +270,7 @@ def generate_wordmark(
     if variant == "dark":
         bg_color = colors["dark_bg"]
         icon_ag_color = colors["cream"]
-        prompt_color = colors["off_white"]
+        prompt_color = colors["light_bg"]
     elif variant == "light":
         bg_color = colors["light_bg"]
         icon_ag_color = colors["dark_text"]
@@ -284,10 +330,6 @@ def generate_adaptive_wordmark(
     """Generate adaptive wordmark that responds to system color scheme."""
     colors = CONFIG["colors"]
 
-    # Build path elements for both modes
-    icon_paths_light = []  # For light mode (dark bg)
-    icon_paths_dark = []  # For dark mode (light bg)
-
     # Icon brackets (always amber)
     bracket_left = make_path_element(
         transform(ICON_PATHS["left_bracket"]), colors["amber"]
@@ -319,7 +361,7 @@ def generate_adaptive_wordmark(
     prompt_light = []
     for letter in ["p", "r", "o", "m", "p2", "t2"]:
         prompt_light.append(
-            make_path_element(transform(TEXT_PATHS[letter]), colors["off_white"])
+            make_path_element(transform(TEXT_PATHS[letter]), colors["light_bg"])
         )
 
     # Text "prompt" - dark version (for light bg)
@@ -342,35 +384,35 @@ def generate_adaptive_wordmark(
       .text-dark {{ opacity: 1; }}
     }}
   </style>
-  
+
   <!-- Backgrounds -->
   <rect class="bg-dark" width="{viewbox_width}" height="{viewbox_height}" rx="{corner_radius}" fill="{colors["dark_bg"]}"/>
   <rect class="bg-light" width="{viewbox_width}" height="{viewbox_height}" rx="{corner_radius}" fill="{colors["light_bg"]}"/>
-  
+
   <!-- Brackets (always amber) -->
 {bracket_left}
 {bracket_right}
-  
+
   <!-- Icon "ag" - light mode (for dark bg) -->
   <g class="text-light">
 {chr(10).join(icon_ag_light)}
   </g>
-  
+
   <!-- Icon "ag" - dark mode (for light bg) -->
   <g class="text-dark">
 {chr(10).join(icon_ag_dark)}
   </g>
-  
+
   <!-- "agent" (always amber) -->
   <g>
 {chr(10).join(agent_paths)}
   </g>
-  
+
   <!-- "prompt" - light mode -->
   <g class="text-light">
 {chr(10).join(prompt_light)}
   </g>
-  
+
   <!-- "prompt" - dark mode -->
   <g class="text-dark">
 {chr(10).join(prompt_dark)}
@@ -386,45 +428,66 @@ def generate_adaptive_wordmark(
 
 
 def main():
-    output_dir = Path(CONFIG["output_dir"])
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # Assets directory structure: assets/{category}/
+    script_dir = Path(__file__).parent
+    assets_dir = script_dir.parent  # assets/generate/../ = assets/
+    wordmark_dir = assets_dir / "wordmark"
+    wordmark_dir.mkdir(parents=True, exist_ok=True)
 
+    wordmark_config = CONFIG["wordmark"]
     variants = ["dark", "light", "white", "adaptive"]
 
-    print("Generating wordmarks...")
+    print("Generating logos...")
     print(
-        f"  Regular padding: {CONFIG['regular']['horizontal_padding']}px h, {CONFIG['regular']['vertical_padding']}px v"
+        f"  Regular padding: {wordmark_config['regular']['horizontal_padding']}px h, "
+        f"{wordmark_config['regular']['vertical_padding']}px v"
     )
     print(
-        f"  Tight padding:   {CONFIG['tight']['horizontal_padding']}px h, {CONFIG['tight']['vertical_padding']}px v"
+        f"  Tight padding:   {wordmark_config['tight']['horizontal_padding']}px h, "
+        f"{wordmark_config['tight']['vertical_padding']}px v"
     )
-    print(f"  Output directory: {output_dir}")
+    print(f"  Output directory: {wordmark_dir}")
     print()
 
     for variant in variants:
         # Regular version
         svg = generate_wordmark(variant, tight=False)
         filename = f"wordmark-{variant}.svg"
-        filepath = output_dir / filename
+        filepath = wordmark_dir / filename
         filepath.write_text(svg)
         print(f"  ✓ {filename}")
 
         # Tight version
         svg = generate_wordmark(variant, tight=True)
         filename = f"wordmark-{variant}-tight.svg"
-        filepath = output_dir / filename
+        filepath = wordmark_dir / filename
         filepath.write_text(svg)
         print(f"  ✓ {filename}")
 
     print()
     print("Done! Generated 8 wordmark files.")
+
+    # Deploy assets to destinations (paths relative to project root)
+    print()
+    print("Deploying assets...")
+    mappings_file = script_dir / "asset-mappings.yaml"
+    project_root = Path.cwd()
+
+    with open(mappings_file) as f:
+        mappings = yaml.safe_load(f)
+
+    deployed_count = deploy_assets(mappings, assets_dir, project_root)
+    print(f"  ✓ Deployed {deployed_count} assets")
+
     print()
     print("To adjust padding, edit CONFIG at the top of this script:")
     print(
-        f"  CONFIG['tight']['horizontal_padding'] = {CONFIG['tight']['horizontal_padding']}"
+        f"  CONFIG['wordmark']['tight']['horizontal_padding'] = "
+        f"{wordmark_config['tight']['horizontal_padding']}"
     )
     print(
-        f"  CONFIG['tight']['vertical_padding'] = {CONFIG['tight']['vertical_padding']}"
+        f"  CONFIG['wordmark']['tight']['vertical_padding'] = "
+        f"{wordmark_config['tight']['vertical_padding']}"
     )
 
 

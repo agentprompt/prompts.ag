@@ -1,10 +1,10 @@
-name: Claude Code Review
+# Calls reusable workflow from spx-gh-actions
+#
+# Required setup:
+# 1. Add CLAUDE_CODE_OAUTH_TOKEN to repository secrets
+# 2. Adjust authorized_roles if needed
 
-# Configuration via GitHub Actions Variables (Settings > Secrets and variables > Actions > Variables):
-# - CLAUDE_REVIEW_AUTHORIZED_ROLES: JSON array of roles allowed (default: ["OWNER", "MEMBER", "COLLABORATOR"])
-# - CLAUDE_REVIEW_CONCURRENCY_CANCEL: Cancel in-progress reviews (default: false)
-# - CLAUDE_REVIEW_ALLOWED_TOOLS: Restrict tool access (default: gh commands only)
-# - CLAUDE_REVIEW_CUSTOM_PROMPT: Optional custom review prompt
+name: Claude Code Review
 
 on:
   pull_request:
@@ -13,67 +13,30 @@ on:
     # paths:
     #   - "src/**/*.ts"
     #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  id-token: write
 
 jobs:
-  claude-review:
-    concurrency:
-      group: claude-review-${{ github.event.pull_request.number }}
-      cancel-in-progress: ${{ vars.CLAUDE_REVIEW_CONCURRENCY_CANCEL == 'true' }}
-    # Only run for trusted contributors (configurable via CLAUDE_REVIEW_AUTHORIZED_ROLES)
-    if: |
-      contains(fromJSON(vars.CLAUDE_REVIEW_AUTHORIZED_ROLES || '["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
-
-    runs-on: ubuntu-latest
+  review:
     permissions:
       contents: read
-      pull-requests: read
       issues: read
+      pull-requests: read
       id-token: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      # Set default prompt if custom one not provided
-      - name: Set review prompt
-        id: set-prompt
-        run: |
-          if [ -n "${{ vars.CLAUDE_REVIEW_CUSTOM_PROMPT }}" ]; then
-            echo "prompt<<EOF" >> $GITHUB_OUTPUT
-            echo "${{ vars.CLAUDE_REVIEW_CUSTOM_PROMPT }}" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "prompt<<EOF" >> $GITHUB_OUTPUT
-            cat <<'PROMPT_EOF' >> $GITHUB_OUTPUT
-          REPO: ${{ github.repository }}
-          PR NUMBER: ${{ github.event.pull_request.number }}
-
-          Please review this pull request and provide feedback on:
-          - Code quality and best practices
-          - Potential bugs or issues
-          - Performance considerations
-          - Security concerns
-          - Test coverage
-
-          Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
-
-          Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
-          PROMPT_EOF
-            echo "EOF" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run Claude Code Review
-        id: claude-review
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: ${{ steps.set-prompt.outputs.prompt }}
-
-          # Tool restrictions (configurable via CLAUDE_REVIEW_ALLOWED_TOOLS variable)
-          # Default: Only gh commands for reading and commenting
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          claude_args: ${{ vars.CLAUDE_REVIEW_ALLOWED_TOOLS || '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"' }}
+    uses: simonheimlicher/spx-gh-actions/.github/workflows/claude-code-review.yml@main
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    # Uncomment and modify to customize:
+    # with:
+    #   authorized_roles: '["OWNER", "MEMBER"]'
+    #   concurrency_cancel: true
+    #   custom_prompt: |
+    #     REPO: ${{ github.repository }}
+    #     PR NUMBER: ${{ github.event.pull_request.number }}
+    #
+    #     Focus your review on TypeScript type safety and test coverage.
+    #     Use `gh pr comment` to post your review.

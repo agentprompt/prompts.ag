@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
-    <footer className="mt-auto px-6 py-12 border-t border-(--border)">
-      <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-(--text-muted)">
+    <footer className="mt-auto px-6 py-12 border-t border-[var(--border)]">
+      <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[var(--text-muted)]">
         <p>
           prompts.ag is open source under the{" "}
           <a
